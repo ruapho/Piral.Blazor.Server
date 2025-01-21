@@ -51,7 +51,7 @@ internal class NugetMicrofrontendPackage(string name, string version, List<Packa
 
         foreach (var package in _packages.Values)
         {
-            var libItems = package.GetLibItems().FirstOrDefault(m => IsCompatible(m.TargetFramework))?.Items;
+            var libItems = package.GetLibItems().Where(m => IsCompatible(m.TargetFramework)).SelectMany(m => m.Items);
 
             if (libItems is not null)
             {

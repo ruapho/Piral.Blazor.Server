@@ -55,9 +55,9 @@ internal class RemoteMicrofrontendPackage(MfPackageMetadata entry, List<PackageA
     {
         foreach (var package in _packages)
         {
-            var libItems = package.GetLibItems().FirstOrDefault(m => IsCompatible(m.TargetFramework))?.Items;
+			      var libItems = package.GetLibItems().Where(m => IsCompatible(m.TargetFramework)).SelectMany(m => m.Items);
 
-            if (libItems is not null)
+			      if (libItems is not null)
             {
                 foreach (var lib in libItems)
                 {

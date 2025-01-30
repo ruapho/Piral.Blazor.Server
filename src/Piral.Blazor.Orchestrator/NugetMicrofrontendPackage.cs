@@ -27,8 +27,9 @@ internal class NugetMicrofrontendPackage(string name, string version, List<Packa
         try
         {
             var zip = package.GetEntry(path);
+            Console.WriteLine("Loading nuget package file: '{0}'", path);
 
-            if (zip is not null)
+			if (zip is not null)
             {
                 using var zipStream = zip.Open();
                 var msStream = new MemoryStream();
@@ -39,10 +40,15 @@ internal class NugetMicrofrontendPackage(string name, string version, List<Packa
         }
         catch (FileNotFoundException)
         {
-            // This is expected - nothing wrong here
-        }
-
-        return null;
+			Console.WriteLine("Nuget package not found file: '{0}'", path);
+			// This is expected - nothing wrong here
+		}
+        catch (InvalidDataException ex) 
+        {
+			Console.WriteLine("Error reading nuget package: {0} {1}", path, ex.Message);
+			// Also expected - nothing wrong here
+		}
+		return null;
     }
 
     protected override Assembly? LoadMissingAssembly(AssemblyLoadContext _, AssemblyName assemblyName)

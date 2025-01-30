@@ -27,9 +27,9 @@ internal class NugetMicrofrontendPackage(string name, string version, List<Packa
         try
         {
             var zip = package.GetEntry(path);
-            Console.WriteLine("Loading nuget package file: '{0}'", path);
+            //Console.WriteLine("Loading nuget package file: '{0}'", path);
 
-			if (zip is not null)
+            if (zip is not null)
             {
                 using var zipStream = zip.Open();
                 var msStream = new MemoryStream();
@@ -37,52 +37,69 @@ internal class NugetMicrofrontendPackage(string name, string version, List<Packa
                 msStream.Position = 0;
                 return msStream;
             }
+        } catch (FileNotFoundException)
+        {
+            //Console.WriteLine("Nuget package not found file: '{0}'", path);
+            // This is expected - nothing wrong here
+        } catch (InvalidDataException ex)
+        {
+            //Console.WriteLine("Error reading nuget package: {0} {1}", path, ex.Message);
+            // Also expected - nothing wrong here
         }
-        catch (FileNotFoundException)
-        {
-			Console.WriteLine("Nuget package not found file: '{0}'", path);
-			// This is expected - nothing wrong here
-		}
-        catch (InvalidDataException ex) 
-        {
-			Console.WriteLine("Error reading nuget package: {0} {1}", path, ex.Message);
-			// Also expected - nothing wrong here
-		}
-		return null;
+        return null;
     }
 
     protected override Assembly? LoadMissingAssembly(AssemblyLoadContext _, AssemblyName assemblyName)
     {
         var dll = $"{assemblyName.Name}.dll";
+        //Console.WriteLine("Searching for: '{0}'", dll);
 
         foreach (var package in _packages.Values)
         {
-            var libItems = package.GetLibItems().Where(m => IsCompatible(m.TargetFramework)).SelectMany(m => m.Items);
-
-            if (libItems is not null)
+            var libItem = GetBestFit(package.GetLibItems(), dll);
+            if(libItem is not null)
             {
-                foreach (var lib in libItems)
-                {
-                    if (lib.EndsWith(dll))
-                    {
-                        return LoadAssembly(package, lib);
-                    }
-                }
-            }
-        }
+				//Console.WriteLine("Taking {0} as the most compatible", libItem);
+				return LoadAssembly(package, libItem);
+			}
+    }
 
         return null;
     }
 
-    private static bool IsCompatible(NuGetFramework framework)
-    {
-        var current = NuGetFramework.Parse(target);
-        return DefaultCompatibilityProvider.Instance.IsCompatible(current, framework);
-    }
+    private static string? GetBestFit(IEnumerable<FrameworkSpecificGroup> frameworks, string dll)
+	{
+		var current = NuGetFramework.Parse(target);
+        var compatible = frameworks.Where(f => DefaultCompatibilityProvider.Instance.IsCompatible(current, f.TargetFramework));
+
+        if (!compatible.Any())
+		{
+            return null;
+		}
+
+        var candidates = compatible
+            .OrderByDescending(f => f.TargetFramework.Version)
+            .ThenBy(f => f.TargetFramework.Framework == ".NETStandard" ? 1 : 0)// Prefer non - .NETStandard
+            .Where(f => f.Items.Any(i => i.EndsWith(dll)))
+            .SelectMany(f => f.Items)
+            .Where(i => i.EndsWith(dll))
+            .ToList();
+
+        //if(candidates.Any())
+			//Console.WriteLine("Found {0} matching dlls: \n-{1}", candidates.Count(), string.Join("\n-", candidates));
+
+		return candidates.FirstOrDefault();
+	}
+
 
     protected override string GetCssName() => $"{Name}.bundle.scp.css";
 
-    protected override Assembly? GetAssembly() => LoadAssembly(_packages[Name], $"lib/{target}/{Name}.dll");
+    protected override Assembly? GetAssembly() {
+        var dll = $"lib/{target}/{Name}.dll";
+
+		Console.WriteLine("LoadAssembly {0} from path: {1}", Name, dll);
+		return LoadAssembly(_packages[Name], dll);
+    }
 
     public override Stream? GetFile(string path)
     {

@@ -33,7 +33,7 @@ internal class MicrofrontendsMiddleware(RequestDelegate next, IMfRepository repo
                         _contentTypeProvider.TryGetContentType(path, out var contentType);
                         context.Response.ContentType = contentType ?? "application/octet-stream";
                         context.Response.StatusCode = 200;
-                        await ms.CopyToAsync(context.Response.Body);
+                        ms.CopyTo(context.Response.Body);
                         return;
                     }
                 }

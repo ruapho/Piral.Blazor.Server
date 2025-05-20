@@ -34,7 +34,7 @@ internal class RemoteMicrofrontendPackage(MfPackageMetadata entry, List<PackageA
             {
                 using var zipStream = zip.Open();
                 var msStream = new MemoryStream();
-                await zipStream.CopyToAsync(msStream);
+                zipStream.CopyTo(msStream);
                 msStream.Position = 0;
                 return msStream;
             }

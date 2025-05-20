@@ -138,7 +138,7 @@ public class FsNugetSnapshotService : ISnapshotService
             {
                 var stream = new MemoryStream();
                 using var fs = file.OpenRead();
-                await fs.CopyToAsync(stream);
+                fs.CopyTo(stream);
                 stream.Position = 0;
                 var reader = new PackageArchiveReader(stream);
                 _db.TryAdd(id, reader);

@@ -160,7 +160,7 @@ internal class LocalMicrofrontendPackage(string path, IPiralConfig config, IModu
             {
                 using var zipStream = zip.Open();
                 var msStream = new MemoryStream();
-                await zipStream.CopyToAsync(msStream);
+                zipStream.CopyTo(msStream);
                 msStream.Position = 0;
                 return msStream;
             }

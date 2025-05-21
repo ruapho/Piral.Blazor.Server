@@ -11,13 +11,16 @@ internal static class NuGetExtensions
 
     public static IEnumerable<string> GetMatchingLibItems(this PackageArchiveReader package)
     {
-        var libItems = package.GetLibItems().FirstOrDefault(CheckCompatibility)?.Items;
+        var compatibleItems = package.GetLibItems().Where(CheckCompatibility);
 
-        if (libItems is null)
+        if (compatibleItems == null || !compatibleItems.Any())
         {
             return package.GetLibItems().FirstOrDefault(m => m.TargetFramework.IsAny)?.Items ?? Enumerable.Empty<string>();
         }
 
-        return libItems;
+        return compatibleItems
+            .OrderByDescending(f => f.TargetFramework.Version)
+            .ThenBy(f => f.TargetFramework.Framework == ".NETStandard" ? 1 : 0) // Prefer non - .NETStandard
+            .SelectMany(f => f.Items);
     }
 }

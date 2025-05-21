@@ -56,7 +56,7 @@ internal class LocalMicrofrontendPackage(string path, IPiralConfig config, IModu
 
             foreach (var lib in libItems)
             {
-                if (lib.EndsWith(dll))
+                if (Path.GetFileName(lib).Equals(lib))
                 {
                     return LoadAssembly(package, lib);
                 }

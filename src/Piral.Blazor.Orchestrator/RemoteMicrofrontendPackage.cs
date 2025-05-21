@@ -59,7 +59,7 @@ internal class RemoteMicrofrontendPackage(MfPackageMetadata entry, List<PackageA
 
             foreach (var lib in libItems)
             {
-                if (lib.EndsWith(dll))
+                if (Path.GetFileName(lib).Equals(lib))
                 {
                     return LoadAssembly(package, lib);
                 }
